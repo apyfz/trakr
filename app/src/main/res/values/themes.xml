@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.TrakCodex" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.Trakr" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">true</item><item name="android:colorAccent">#A42D20</item>
     </style>
 </resources>

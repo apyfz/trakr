@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.trakcodex.app"
+    namespace = "com.trakr.app"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.trakcodex.app"
+        applicationId = "com.trakr.app"
         minSdk = 31
         targetSdk = 37
         versionCode = 1
