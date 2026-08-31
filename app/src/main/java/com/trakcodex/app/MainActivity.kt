@@ -28,11 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -46,10 +48,6 @@ import java.util.UUID
 
 data class Entry(val id: String = UUID.randomUUID().toString(), val type: String, val note: String, val amount: Long)
 private val Geist = FontFamily(Font(R.font.geist_variable))
-private val CardSurface = Color(0xFF242424)
-private val CardInk = Color(0xFFE8E8E8)
-private val CardMuted = Color(0xFFC4C4C4)
-private val CanvasBlack = Color(0xFF090909)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +70,16 @@ class MainActivity : ComponentActivity() {
     )
     val accentColor = when (accent) { "Blue" -> Color(0xFF2563EB); "Green" -> Color(0xFF15803D); "Purple" -> Color(0xFF7E22CE); else -> Color(0xFF3A3A3A) }
     val scheme = if (mode == "Light") lightColorScheme(primary = accentColor, onPrimary = Color.White, secondaryContainer = Color(0xFFE8E8E8), onSecondaryContainer = Color(0xFF1B1B1B), background = Color(0xFFF8F8F8), surface = Color(0xFFF8F8F8), surfaceContainer = Color(0xFFF2F2F2), onSurface = Color(0xFF1B1B1B), onSurfaceVariant = Color(0xFF565656), outline = Color(0xFF777777), outlineVariant = Color(0xFFCACACA)) else monochromeDark.copy(primary = accentColor)
+    val view = LocalView.current
+    SideEffect {
+        val activity = view.context as ComponentActivity
+        val barColor = scheme.background.toArgb()
+        if (mode == "Light") {
+            activity.enableEdgeToEdge(SystemBarStyle.light(barColor, barColor), SystemBarStyle.light(barColor, barColor))
+        } else {
+            activity.enableEdgeToEdge(SystemBarStyle.dark(barColor), SystemBarStyle.dark(barColor))
+        }
+    }
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
@@ -79,7 +87,7 @@ class MainActivity : ComponentActivity() {
 @Composable private fun TrakCodexApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     var appearance by remember { mutableStateOf(loadSetting(context, "appearance", "Dark")) }
-    var accent by remember { mutableStateOf(loadSetting(context, "accent", "Monochrome")) }
+    var accent by remember { mutableStateOf(loadSetting(context, "accent", "Monochrome").takeIf { it in setOf("Monochrome", "Blue", "Green", "Purple") } ?: "Monochrome") }
     TrakCodexTheme(appearance, accent) {
     var month by remember { mutableStateOf(YearMonth.now()) }
     var entries by remember(month) { mutableStateOf(loadEntries(context, month).ifEmpty { sampleEntries() }) }
@@ -122,7 +130,7 @@ class MainActivity : ComponentActivity() {
         } }
         LedgerSection("Income", entries.filter { it.type != "Expense" }, "No income this month", currency, onDelete)
         LedgerSection("Expenses", entries.filter { it.type == "Expense" }, "No expenses this month", currency, onDelete)
-        Spacer(Modifier.height(200.dp))
+        Spacer(Modifier.height(136.dp))
     }
 }
 
@@ -144,7 +152,21 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable private fun QuickActions(onIncome: () -> Unit, onExpense: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(200.dp).background(Brush.verticalGradient(colorStops = arrayOf(0f to Color.Transparent, 0.36f to CanvasBlack, 1f to CanvasBlack)))) {
+    val background = MaterialTheme.colorScheme.background
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(112.dp)
+            .background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0f to Color.Transparent,
+                        0.24f to background,
+                        1f to background,
+                    ),
+                ),
+            ),
+    ) {
     BottomAppBar(containerColor = Color.Transparent, modifier = Modifier.align(Alignment.BottomCenter)) {
         FilledTonalButton(onClick = onIncome, modifier = Modifier.weight(1f).padding(start = 16.dp), colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Income", fontFamily = Geist) }
         Spacer(Modifier.width(12.dp))
@@ -159,7 +181,7 @@ class MainActivity : ComponentActivity() {
     var colorOpen by remember { mutableStateOf(false) }
     Scaffold(topBar = { TopAppBar(title = { Text("Settings", fontFamily = Geist) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Outlined.ChevronLeft, "Back") } }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Text("Preferences", style = MaterialTheme.typography.titleSmall, fontFamily = Geist, color = CardMuted)
+            Text("Preferences", style = MaterialTheme.typography.titleSmall, fontFamily = Geist, color = MaterialTheme.colorScheme.onSurfaceVariant)
             ListItem(headlineContent = { Text("Currency", fontFamily = Geist) }, supportingContent = { Text(currency, fontFamily = Geist) }, modifier = Modifier.clickable { currencyOpen = true })
             HorizontalDivider(); ListItem(headlineContent = { Text("Appearance", fontFamily = Geist) }, supportingContent = { Text(appearance, fontFamily = Geist) }, modifier = Modifier.clickable { appearanceOpen = true })
             HorizontalDivider(); ListItem(headlineContent = { Text("Theme color", fontFamily = Geist) }, supportingContent = { Text(color, fontFamily = Geist) }, modifier = Modifier.clickable { colorOpen = true })
