@@ -46,7 +46,6 @@ import java.util.UUID
 
 data class Entry(val id: String = UUID.randomUUID().toString(), val type: String, val note: String, val amount: Long)
 private val Geist = FontFamily(Font(R.font.geist_variable))
-private val GeistMono = FontFamily(Font(R.font.geist_mono_variable))
 private val CardSurface = Color(0xFF242424)
 private val CardInk = Color(0xFFE8E8E8)
 private val CardMuted = Color(0xFFC4C4C4)
@@ -111,7 +110,7 @@ class MainActivity : ComponentActivity() {
         }
         ElevatedCard(Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CardSurface, contentColor = CardInk)) { Column(Modifier.padding(20.dp)) {
             Text("Available", style = MaterialTheme.typography.labelLarge, fontFamily = Geist)
-            Text(money(balance, currency), style = MaterialTheme.typography.displaySmall, fontFamily = GeistMono, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+            Text(money(balance, currency), style = MaterialTheme.typography.displaySmall, fontFamily = Geist, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
             HorizontalDivider()
             Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) { SummaryValue("Income", income, currency); SummaryValue("Spent", expenses, currency) }
         } }
@@ -121,7 +120,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable private fun SummaryValue(label: String, amount: Long, currency: String) { Column { Text(label, style = MaterialTheme.typography.labelMedium, fontFamily = Geist, color = CardMuted); Text(money(amount, currency), style = MaterialTheme.typography.titleMedium, fontFamily = GeistMono, fontWeight = FontWeight.SemiBold) } }
+@Composable private fun SummaryValue(label: String, amount: Long, currency: String) { Column { Text(label, style = MaterialTheme.typography.labelMedium, fontFamily = Geist, color = CardMuted); Text(money(amount, currency), style = MaterialTheme.typography.titleMedium, fontFamily = Geist, fontWeight = FontWeight.Bold) } }
 
 @Composable private fun LedgerSection(title: String, entries: List<Entry>, emptyLabel: String, currency: String, onDelete: (String) -> Unit) {
     Text(title, style = MaterialTheme.typography.titleMedium, fontFamily = Geist, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 24.dp, bottom = 8.dp))
@@ -134,7 +133,7 @@ class MainActivity : ComponentActivity() {
 @Composable private fun TransactionRow(entry: Entry, currency: String, onDelete: (String) -> Unit) {
     ListItem(
         headlineContent = { Text(entry.note, fontFamily = Geist) },
-        trailingContent = { Row(verticalAlignment = Alignment.CenterVertically) { Text(money(entry.amount, currency), style = MaterialTheme.typography.labelLarge, fontFamily = GeistMono); IconButton(onClick = { onDelete(entry.id) }) { Icon(Icons.Outlined.DeleteOutline, "Delete ${entry.note}") } } },
+        trailingContent = { Row(verticalAlignment = Alignment.CenterVertically) { Text(money(entry.amount, currency), style = MaterialTheme.typography.labelLarge, fontFamily = Geist, fontWeight = FontWeight.Bold); IconButton(onClick = { onDelete(entry.id) }) { Icon(Icons.Outlined.DeleteOutline, "Delete ${entry.note}") } } },
     )
 }
 
@@ -157,7 +156,7 @@ class MainActivity : ComponentActivity() {
     Scaffold(topBar = { TopAppBar(title = { Text("Settings", fontFamily = Geist) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Outlined.ChevronLeft, "Back") } }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Text("Preferences", style = MaterialTheme.typography.titleSmall, fontFamily = Geist, color = CardMuted)
-            ListItem(headlineContent = { Text("Currency", fontFamily = Geist) }, supportingContent = { Text(currency, fontFamily = GeistMono) }, modifier = Modifier.clickable { currencyOpen = true })
+            ListItem(headlineContent = { Text("Currency", fontFamily = Geist) }, supportingContent = { Text(currency, fontFamily = Geist) }, modifier = Modifier.clickable { currencyOpen = true })
             HorizontalDivider(); ListItem(headlineContent = { Text("Appearance", fontFamily = Geist) }, supportingContent = { Text(appearance, fontFamily = Geist) }, modifier = Modifier.clickable { appearanceOpen = true })
             HorizontalDivider(); ListItem(headlineContent = { Text("Theme color", fontFamily = Geist) }, supportingContent = { Text(color, fontFamily = Geist) }, modifier = Modifier.clickable { colorOpen = true })
         }
@@ -174,7 +173,7 @@ class MainActivity : ComponentActivity() {
     LaunchedEffect(Unit) { amountFocus.requestFocus(); keyboard?.show() }
     ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CardSurface, contentColor = CardInk)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(if (isIncome) "Add income" else "Add expense", style = MaterialTheme.typography.titleLarge, fontFamily = Geist)
-        OutlinedTextField(amount, { amount = it.filter(Char::isDigit) }, label = { Text("Amount", fontFamily = Geist) }, prefix = { Text("$", fontFamily = GeistMono) }, textStyle = TextStyle(fontFamily = GeistMono), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth().focusRequester(amountFocus))
+        OutlinedTextField(amount, { amount = it.filter(Char::isDigit) }, label = { Text("Amount", fontFamily = Geist) }, prefix = { Text("$", fontFamily = Geist) }, textStyle = TextStyle(fontFamily = Geist), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth().focusRequester(amountFocus))
         OutlinedTextField(note, { note = it }, label = { Text("Description", fontFamily = Geist) }, textStyle = TextStyle(fontFamily = Geist), singleLine = true, modifier = Modifier.fillMaxWidth())
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = onDismiss) { Text("Cancel", fontFamily = Geist) }; Button(onClick = { val value = amount.toLongOrNull() ?: 0; if (value > 0 && note.isNotBlank()) onSave(Entry(type = if (isIncome) "Income" else "Expense", note = note.trim(), amount = value)) }) { Text("Save", fontFamily = Geist) } }
     } }
