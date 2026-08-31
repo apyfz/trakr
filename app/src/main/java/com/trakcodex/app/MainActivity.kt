@@ -15,6 +15,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -79,14 +80,15 @@ class MainActivity : ComponentActivity() {
     var month by remember { mutableStateOf(YearMonth.now()) }
     var entries by remember(month) { mutableStateOf(loadEntries(context, month).ifEmpty { sampleEntries() }) }
     var currency by remember { mutableStateOf(loadCurrency(context)) }
-    var currencyMenu by remember { mutableStateOf(false) }
+    var settings by remember { mutableStateOf(false) }
     var dialog by remember { mutableStateOf<String?>(null) }
     var displayedForm by remember { mutableStateOf<String?>(null) }
     var choosingMonth by remember { mutableStateOf(false) }
     fun save(newEntries: List<Entry>) { entries = newEntries; saveEntries(context, month, newEntries) }
 
+    if (settings) { SettingsScreen(currency, onCurrency = { currency = it; saveCurrency(context, it) }, onBack = { settings = false }); return }
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous month") } }, actions = { Box { TextButton(onClick = { currencyMenu = true }) { Text(currency, fontFamily = Geist) }; DropdownMenu(expanded = currencyMenu, onDismissRequest = { currencyMenu = false }) { listOf("INR", "IDR", "USD", "CAD", "MYR").forEach { code -> DropdownMenuItem(text = { Text(code, fontFamily = Geist) }, onClick = { currency = code; saveCurrency(context, code); currencyMenu = false }) } } }; IconButton(onClick = { choosingMonth = true }) { Icon(Icons.Outlined.CalendarMonth, "Choose month") }; IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Outlined.ChevronRight, "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color(0xFF121212))) },
+        topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist, modifier = Modifier.clickable { choosingMonth = true }) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous month") } }, actions = { IconButton(onClick = { choosingMonth = true }) { Icon(Icons.Outlined.CalendarMonth, "Choose month") }; IconButton(onClick = { settings = true }) { Icon(Icons.Outlined.Settings, "Settings") }; IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Outlined.ChevronRight, "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color(0xFF121212))) },
     ) { padding -> Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
         LedgerContent(month, entries, currency, { id -> save(entries.filterNot { it.id == id }) }, dialog, displayedForm, { dialog = null }, { save(entries + it); dialog = null }, Modifier.fillMaxSize())
         QuickActions(onIncome = { displayedForm = "income"; dialog = "income" }, onExpense = { displayedForm = "expense"; dialog = "expense" }, modifier = Modifier.align(Alignment.BottomCenter))
@@ -143,6 +145,26 @@ class MainActivity : ComponentActivity() {
         Spacer(Modifier.width(12.dp))
         Button(onClick = onExpense, modifier = Modifier.weight(1f).padding(end = 16.dp)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Expense", fontFamily = Geist) }
     } }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun SettingsScreen(currency: String, onCurrency: (String) -> Unit, onBack: () -> Unit) {
+    var currencyOpen by remember { mutableStateOf(false) }
+    var appearanceOpen by remember { mutableStateOf(false) }
+    var colorOpen by remember { mutableStateOf(false) }
+    var appearance by remember { mutableStateOf("Dark") }
+    var color by remember { mutableStateOf("Monochrome") }
+    Scaffold(topBar = { TopAppBar(title = { Text("Settings", fontFamily = Geist) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Outlined.ChevronLeft, "Back") } }) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+            Text("Preferences", style = MaterialTheme.typography.titleSmall, fontFamily = Geist, color = CardMuted)
+            ListItem(headlineContent = { Text("Currency", fontFamily = Geist) }, supportingContent = { Text(currency, fontFamily = GeistMono) }, modifier = Modifier.clickable { currencyOpen = true })
+            HorizontalDivider(); ListItem(headlineContent = { Text("Appearance", fontFamily = Geist) }, supportingContent = { Text(appearance, fontFamily = Geist) }, modifier = Modifier.clickable { appearanceOpen = true })
+            HorizontalDivider(); ListItem(headlineContent = { Text("Theme color", fontFamily = Geist) }, supportingContent = { Text(color, fontFamily = Geist) }, modifier = Modifier.clickable { colorOpen = true })
+        }
+    }
+    DropdownMenu(expanded = currencyOpen, onDismissRequest = { currencyOpen = false }) { listOf("INR", "IDR", "USD", "CAD", "MYR").forEach { code -> DropdownMenuItem(text = { Text(code, fontFamily = Geist) }, onClick = { onCurrency(code); currencyOpen = false }) } }
+    DropdownMenu(expanded = appearanceOpen, onDismissRequest = { appearanceOpen = false }) { listOf("Dark", "Light", "System").forEach { value -> DropdownMenuItem(text = { Text(value, fontFamily = Geist) }, onClick = { appearance = value; appearanceOpen = false }) } }
+    DropdownMenu(expanded = colorOpen, onDismissRequest = { colorOpen = false }) { listOf("Monochrome", "Blue", "Green", "Purple").forEach { value -> DropdownMenuItem(text = { Text(value, fontFamily = Geist) }, onClick = { color = value; colorOpen = false }) } }
 }
 
 @Composable private fun EntryCard(isIncome: Boolean, onDismiss: () -> Unit, onSave: (Entry) -> Unit) {
