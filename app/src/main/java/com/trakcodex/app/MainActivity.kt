@@ -55,11 +55,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.rgb(18, 18, 18)), SystemBarStyle.dark(android.graphics.Color.rgb(9, 9, 9)))
-        setContent { TrakCodexTheme { TrakCodexApp() } }
+        setContent { TrakCodexApp() }
     }
 }
 
-@Composable private fun TrakCodexTheme(content: @Composable () -> Unit) {
+@Composable private fun TrakCodexTheme(mode: String, accent: String, content: @Composable () -> Unit) {
     val monochromeDark = darkColorScheme(
         primary = Color(0xFFE8E8E8), onPrimary = Color(0xFF1B1B1B), primaryContainer = Color(0xFF3D3D3D), onPrimaryContainer = Color(0xFFF2F2F2),
         secondary = Color(0xFFD0D0D0), onSecondary = Color(0xFF242424), secondaryContainer = Color(0xFF444444), onSecondaryContainer = Color(0xFFF0F0F0),
@@ -70,12 +70,17 @@ class MainActivity : ComponentActivity() {
         scrim = Color(0xFF000000), inverseSurface = Color(0xFFE8E8E8), inverseOnSurface = Color(0xFF1B1B1B), inversePrimary = Color(0xFF3D3D3D), surfaceTint = Color(0xFFE8E8E8),
         surfaceDim = Color(0xFF090909), surfaceBright = Color(0xFF3A3A3A), surfaceContainerLowest = Color(0xFF090909), surfaceContainerLow = Color(0xFF121212), surfaceContainer = Color(0xFF1B1B1B), surfaceContainerHigh = Color(0xFF242424), surfaceContainerHighest = Color(0xFF303030),
     )
-    MaterialTheme(colorScheme = monochromeDark, content = content)
+    val accentColor = when (accent) { "Blue" -> Color(0xFF9CCAFF); "Green" -> Color(0xFF9FDEA7); "Purple" -> Color(0xFFD9B8FF); else -> Color(0xFFE8E8E8) }
+    val scheme = if (mode == "Light") lightColorScheme(primary = accentColor, onPrimary = Color.Black, background = Color(0xFFF8F8F8), surface = Color(0xFFF8F8F8), onSurface = Color(0xFF1B1B1B)) else monochromeDark.copy(primary = accentColor)
+    MaterialTheme(colorScheme = scheme, content = content)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun TrakCodexApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
+    var appearance by remember { mutableStateOf(loadSetting(context, "appearance", "Dark")) }
+    var accent by remember { mutableStateOf(loadSetting(context, "accent", "Monochrome")) }
+    TrakCodexTheme(appearance, accent) {
     var month by remember { mutableStateOf(YearMonth.now()) }
     var entries by remember(month) { mutableStateOf(loadEntries(context, month).ifEmpty { sampleEntries() }) }
     var currency by remember { mutableStateOf(loadCurrency(context)) }
@@ -85,7 +90,7 @@ class MainActivity : ComponentActivity() {
     var choosingMonth by remember { mutableStateOf(false) }
     fun save(newEntries: List<Entry>) { entries = newEntries; saveEntries(context, month, newEntries) }
 
-    if (settings) { SettingsScreen(currency, onCurrency = { currency = it; saveCurrency(context, it) }, onBack = { settings = false }); return }
+    if (settings) { SettingsScreen(currency, appearance, accent, onCurrency = { currency = it; saveCurrency(context, it) }, onAppearance = { appearance = it; saveSetting(context, "appearance", it) }, onAccent = { accent = it; saveSetting(context, "accent", it) }, onBack = { settings = false }); return@TrakCodexTheme }
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist, modifier = Modifier.clickable { choosingMonth = true }) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous month") } }, actions = { IconButton(onClick = { settings = true }) { Icon(Icons.Outlined.Settings, "Settings") }; IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Outlined.ChevronRight, "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color(0xFF121212))) },
     ) { padding -> Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
@@ -93,6 +98,7 @@ class MainActivity : ComponentActivity() {
         QuickActions(onIncome = { displayedForm = "income"; dialog = "income" }, onExpense = { displayedForm = "expense"; dialog = "expense" }, modifier = Modifier.align(Alignment.BottomCenter))
     } }
     if (choosingMonth) MonthDialog(month, { choosingMonth = false }, { month = it; choosingMonth = false })
+    }
 }
 
 @Composable private fun LedgerContent(month: YearMonth, entries: List<Entry>, currency: String, onDelete: (String) -> Unit, formType: String?, displayedForm: String?, onFormDismiss: () -> Unit, onAdd: (Entry) -> Unit, modifier: Modifier = Modifier) {
@@ -147,12 +153,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun SettingsScreen(currency: String, onCurrency: (String) -> Unit, onBack: () -> Unit) {
+@Composable private fun SettingsScreen(currency: String, appearance: String, color: String, onCurrency: (String) -> Unit, onAppearance: (String) -> Unit, onAccent: (String) -> Unit, onBack: () -> Unit) {
     var currencyOpen by remember { mutableStateOf(false) }
     var appearanceOpen by remember { mutableStateOf(false) }
     var colorOpen by remember { mutableStateOf(false) }
-    var appearance by remember { mutableStateOf("Dark") }
-    var color by remember { mutableStateOf("Monochrome") }
     Scaffold(topBar = { TopAppBar(title = { Text("Settings", fontFamily = Geist) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Outlined.ChevronLeft, "Back") } }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Text("Preferences", style = MaterialTheme.typography.titleSmall, fontFamily = Geist, color = CardMuted)
@@ -162,8 +166,8 @@ class MainActivity : ComponentActivity() {
         }
     }
     DropdownMenu(expanded = currencyOpen, onDismissRequest = { currencyOpen = false }) { listOf("INR", "IDR", "USD", "CAD", "MYR").forEach { code -> DropdownMenuItem(text = { Text(code, fontFamily = Geist) }, onClick = { onCurrency(code); currencyOpen = false }) } }
-    DropdownMenu(expanded = appearanceOpen, onDismissRequest = { appearanceOpen = false }) { listOf("Dark", "Light", "System").forEach { value -> DropdownMenuItem(text = { Text(value, fontFamily = Geist) }, onClick = { appearance = value; appearanceOpen = false }) } }
-    DropdownMenu(expanded = colorOpen, onDismissRequest = { colorOpen = false }) { listOf("Monochrome", "Blue", "Green", "Purple").forEach { value -> DropdownMenuItem(text = { Text(value, fontFamily = Geist) }, onClick = { color = value; colorOpen = false }) } }
+    DropdownMenu(expanded = appearanceOpen, onDismissRequest = { appearanceOpen = false }) { listOf("Dark", "Light").forEach { value -> DropdownMenuItem(text = { Text(value, fontFamily = Geist) }, onClick = { onAppearance(value); appearanceOpen = false }) } }
+    DropdownMenu(expanded = colorOpen, onDismissRequest = { colorOpen = false }) { listOf("Monochrome", "Blue", "Green", "Purple").forEach { value -> DropdownMenuItem(text = { Text(value, fontFamily = Geist) }, onClick = { onAccent(value); colorOpen = false }) } }
 }
 
 @Composable private fun EntryCard(isIncome: Boolean, onDismiss: () -> Unit, onSave: (Entry) -> Unit) {
@@ -190,6 +194,8 @@ class MainActivity : ComponentActivity() {
 private fun money(amount: Long, currency: String): String = NumberFormat.getCurrencyInstance(Locale.US).apply { this.currency = java.util.Currency.getInstance(currency) }.format(amount)
 private fun loadCurrency(context: Context) = context.getSharedPreferences("trak_codex", Context.MODE_PRIVATE).getString("currency", "USD") ?: "USD"
 private fun saveCurrency(context: Context, currency: String) { context.getSharedPreferences("trak_codex", Context.MODE_PRIVATE).edit().putString("currency", currency).apply() }
+private fun loadSetting(context: Context, key: String, fallback: String) = context.getSharedPreferences("trak_codex", Context.MODE_PRIVATE).getString(key, fallback) ?: fallback
+private fun saveSetting(context: Context, key: String, value: String) { context.getSharedPreferences("trak_codex", Context.MODE_PRIVATE).edit().putString(key, value).apply() }
 private fun sampleEntries() = listOf(
     Entry(type = "Salary", note = "Monthly salary", amount = 5200),
     Entry(type = "Other", note = "Freelance project", amount = 680),
