@@ -70,8 +70,8 @@ class MainActivity : ComponentActivity() {
         scrim = Color(0xFF000000), inverseSurface = Color(0xFFE8E8E8), inverseOnSurface = Color(0xFF1B1B1B), inversePrimary = Color(0xFF3D3D3D), surfaceTint = Color(0xFFE8E8E8),
         surfaceDim = Color(0xFF090909), surfaceBright = Color(0xFF3A3A3A), surfaceContainerLowest = Color(0xFF090909), surfaceContainerLow = Color(0xFF121212), surfaceContainer = Color(0xFF1B1B1B), surfaceContainerHigh = Color(0xFF242424), surfaceContainerHighest = Color(0xFF303030),
     )
-    val accentColor = when (accent) { "Blue" -> Color(0xFF9CCAFF); "Green" -> Color(0xFF9FDEA7); "Purple" -> Color(0xFFD9B8FF); else -> Color(0xFFE8E8E8) }
-    val scheme = if (mode == "Light") lightColorScheme(primary = accentColor, onPrimary = Color.Black, background = Color(0xFFF8F8F8), surface = Color(0xFFF8F8F8), onSurface = Color(0xFF1B1B1B)) else monochromeDark.copy(primary = accentColor)
+    val accentColor = when (accent) { "Blue" -> Color(0xFF2563EB); "Green" -> Color(0xFF15803D); "Purple" -> Color(0xFF7E22CE); else -> Color(0xFF3A3A3A) }
+    val scheme = if (mode == "Light") lightColorScheme(primary = accentColor, onPrimary = Color.White, secondaryContainer = Color(0xFFE8E8E8), onSecondaryContainer = Color(0xFF1B1B1B), background = Color(0xFFF8F8F8), surface = Color(0xFFF8F8F8), surfaceContainer = Color(0xFFF2F2F2), onSurface = Color(0xFF1B1B1B), onSurfaceVariant = Color(0xFF565656), outline = Color(0xFF777777), outlineVariant = Color(0xFFCACACA)) else monochromeDark.copy(primary = accentColor)
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
 
     if (settings) { SettingsScreen(currency, appearance, accent, onCurrency = { currency = it; saveCurrency(context, it) }, onAppearance = { appearance = it; saveSetting(context, "appearance", it) }, onAccent = { accent = it; saveSetting(context, "accent", it) }, onBack = { settings = false }); return@TrakCodexTheme }
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist, modifier = Modifier.clickable { choosingMonth = true }) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous month") } }, actions = { IconButton(onClick = { settings = true }) { Icon(Icons.Outlined.Settings, "Settings") }; IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Outlined.ChevronRight, "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color(0xFF121212))) },
+        topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist, modifier = Modifier.clickable { choosingMonth = true }) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous month") } }, actions = { IconButton(onClick = { settings = true }) { Icon(Icons.Outlined.Settings, "Settings") }; IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Outlined.ChevronRight, "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) },
     ) { padding -> Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
         LedgerContent(month, entries, currency, { id -> save(entries.filterNot { it.id == id }) }, dialog, displayedForm, { dialog = null }, { save(entries + it); dialog = null }, Modifier.fillMaxSize())
         QuickActions(onIncome = { displayedForm = "income"; dialog = "income" }, onExpense = { displayedForm = "expense"; dialog = "expense" }, modifier = Modifier.align(Alignment.BottomCenter))
@@ -114,7 +114,7 @@ class MainActivity : ComponentActivity() {
         ) {
             Column { if (displayedForm != null) EntryCard(isIncome = displayedForm == "income", onDismiss = onFormDismiss, onSave = onAdd); Spacer(Modifier.height(16.dp)) }
         }
-        ElevatedCard(Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CardSurface, contentColor = CardInk)) { Column(Modifier.padding(20.dp)) {
+        ElevatedCard(Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer, contentColor = MaterialTheme.colorScheme.onSurface)) { Column(Modifier.padding(20.dp)) {
             Text("Available", style = MaterialTheme.typography.labelLarge, fontFamily = Geist)
             Text(money(balance, currency), style = MaterialTheme.typography.displaySmall, fontFamily = Geist, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
             HorizontalDivider()
@@ -126,11 +126,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable private fun SummaryValue(label: String, amount: Long, currency: String) { Column { Text(label, style = MaterialTheme.typography.labelMedium, fontFamily = Geist, color = CardMuted); Text(money(amount, currency), style = MaterialTheme.typography.titleMedium, fontFamily = Geist, fontWeight = FontWeight.Bold) } }
+@Composable private fun SummaryValue(label: String, amount: Long, currency: String) { Column { Text(label, style = MaterialTheme.typography.labelMedium, fontFamily = Geist, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(money(amount, currency), style = MaterialTheme.typography.titleMedium, fontFamily = Geist, fontWeight = FontWeight.Bold) } }
 
 @Composable private fun LedgerSection(title: String, entries: List<Entry>, emptyLabel: String, currency: String, onDelete: (String) -> Unit) {
     Text(title, style = MaterialTheme.typography.titleMedium, fontFamily = Geist, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 24.dp, bottom = 8.dp))
-    OutlinedCard(Modifier.fillMaxWidth(), colors = CardDefaults.outlinedCardColors(containerColor = CardSurface, contentColor = CardInk)) {
+    OutlinedCard(Modifier.fillMaxWidth(), colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer, contentColor = MaterialTheme.colorScheme.onSurface)) {
         if (entries.isEmpty()) ListItem(headlineContent = { Text(emptyLabel, fontFamily = Geist) }, supportingContent = { Text("Use the buttons below to add one.", fontFamily = Geist) })
         else entries.forEachIndexed { index, entry -> TransactionRow(entry, currency, onDelete); if (index < entries.lastIndex) HorizontalDivider(Modifier.padding(start = 16.dp)) }
     }
@@ -144,9 +144,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable private fun QuickActions(onIncome: () -> Unit, onExpense: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(200.dp).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black)))) {
+    Box(modifier.fillMaxWidth().height(200.dp).background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.background)))) {
     BottomAppBar(containerColor = Color.Transparent, modifier = Modifier.align(Alignment.BottomCenter)) {
-        FilledTonalButton(onClick = onIncome, modifier = Modifier.weight(1f).padding(start = 16.dp)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Income", fontFamily = Geist) }
+        FilledTonalButton(onClick = onIncome, modifier = Modifier.weight(1f).padding(start = 16.dp), colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Income", fontFamily = Geist) }
         Spacer(Modifier.width(12.dp))
         Button(onClick = onExpense, modifier = Modifier.weight(1f).padding(end = 16.dp)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Expense", fontFamily = Geist) }
     } }
@@ -175,7 +175,7 @@ class MainActivity : ComponentActivity() {
     val amountFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) { amountFocus.requestFocus(); keyboard?.show() }
-    ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CardSurface, contentColor = CardInk)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer, contentColor = MaterialTheme.colorScheme.onSurface)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(if (isIncome) "Add income" else "Add expense", style = MaterialTheme.typography.titleLarge, fontFamily = Geist)
         OutlinedTextField(amount, { amount = it.filter(Char::isDigit) }, label = { Text("Amount", fontFamily = Geist) }, prefix = { Text("$", fontFamily = Geist) }, textStyle = TextStyle(fontFamily = Geist), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth().focusRequester(amountFocus))
         OutlinedTextField(note, { note = it }, label = { Text("Description", fontFamily = Geist) }, textStyle = TextStyle(fontFamily = Geist), singleLine = true, modifier = Modifier.fillMaxWidth())
