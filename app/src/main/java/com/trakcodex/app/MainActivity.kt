@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable private fun QuickActions(onIncome: () -> Unit, onExpense: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(200.dp).background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.background)))) {
+    Box(modifier.fillMaxWidth().height(200.dp).background(Brush.verticalGradient(colorStops = arrayOf(0f to Color.Transparent, 0.36f to CanvasBlack, 1f to CanvasBlack)))) {
     BottomAppBar(containerColor = Color.Transparent, modifier = Modifier.align(Alignment.BottomCenter)) {
         FilledTonalButton(onClick = onIncome, modifier = Modifier.weight(1f).padding(start = 16.dp), colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Income", fontFamily = Geist) }
         Spacer(Modifier.width(12.dp))
