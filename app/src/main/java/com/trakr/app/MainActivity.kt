@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
     var accent by remember { mutableStateOf(loadSetting(context, "accent", "Monochrome").takeIf { it in setOf("Monochrome", "Blue", "Green", "Purple") } ?: "Monochrome") }
     TrakrTheme(appearance, accent) {
     var month by remember { mutableStateOf(YearMonth.now()) }
-    var entries by remember(month) { mutableStateOf(loadEntries(context, month).ifEmpty { sampleEntries() }) }
+    var entries by remember(month) { mutableStateOf(loadEntries(context, month)) }
     var currency by remember { mutableStateOf(loadCurrency(context)) }
     var settings by remember { mutableStateOf(false) }
     var dialog by remember { mutableStateOf<String?>(null) }
@@ -310,22 +310,6 @@ private fun loadCurrency(context: Context) = context.getSharedPreferences("trakr
 private fun saveCurrency(context: Context, currency: String) { context.getSharedPreferences("trakr", Context.MODE_PRIVATE).edit().putString("currency", currency).apply() }
 private fun loadSetting(context: Context, key: String, fallback: String) = context.getSharedPreferences("trakr", Context.MODE_PRIVATE).getString(key, fallback) ?: fallback
 private fun saveSetting(context: Context, key: String, value: String) { context.getSharedPreferences("trakr", Context.MODE_PRIVATE).edit().putString(key, value).apply() }
-private fun sampleEntries() = listOf(
-    Entry(type = "Salary", note = "Monthly salary", amount = 5200),
-    Entry(type = "Other", note = "Freelance project", amount = 680),
-    Entry(type = "Expense", note = "Apartment rent", amount = 1450),
-    Entry(type = "Expense", note = "Groceries", amount = 124),
-    Entry(type = "Expense", note = "Coffee with Sam", amount = 14),
-    Entry(type = "Expense", note = "Metro card", amount = 36),
-    Entry(type = "Expense", note = "Phone bill", amount = 48),
-    Entry(type = "Expense", note = "Streaming subscription", amount = 18),
-    Entry(type = "Expense", note = "Lunch meeting", amount = 27),
-    Entry(type = "Expense", note = "Gym membership", amount = 52),
-    Entry(type = "Expense", note = "Electricity", amount = 73),
-    Entry(type = "Expense", note = "Weekend groceries", amount = 86),
-    Entry(type = "Expense", note = "Books", amount = 31),
-    Entry(type = "Expense", note = "Ride share", amount = 22),
-)
 private fun key(month: YearMonth) = "entries_$month"
 private fun loadEntries(context: Context, month: YearMonth): List<Entry> = runCatching { val raw = context.getSharedPreferences("trakr", Context.MODE_PRIVATE).getString(key(month), "[]") ?: "[]"; val json = JSONArray(raw); List(json.length()) { index -> json.getJSONObject(index).let { Entry(it.getString("id"), it.getString("type"), it.getString("note"), it.getLong("amount")) } } }.getOrDefault(emptyList())
 private fun saveEntries(context: Context, month: YearMonth, entries: List<Entry>) { val json = JSONArray(); entries.forEach { json.put(JSONObject().put("id", it.id).put("type", it.type).put("note", it.note).put("amount", it.amount)) }; context.getSharedPreferences("trakr", Context.MODE_PRIVATE).edit().putString(key(month), json.toString()).apply() }
