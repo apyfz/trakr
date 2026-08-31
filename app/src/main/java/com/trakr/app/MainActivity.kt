@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
@@ -36,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
@@ -130,9 +132,9 @@ class MainActivity : ComponentActivity() {
     var choosingMonth by remember { mutableStateOf(false) }
     fun save(newEntries: List<Entry>) { entries = newEntries; saveEntries(context, month, newEntries) }
 
-    if (settings) { SettingsScreen(currency, appearance, accent, onCurrency = { currency = it; saveCurrency(context, it) }, onAppearance = { appearance = it; saveSetting(context, "appearance", it) }, onAccent = { accent = it; saveSetting(context, "accent", it) }, onBack = { settings = false }); return@TrakrTheme }
+    if (settings) { BackHandler { settings = false }; SettingsScreen(currency, appearance, accent, onCurrency = { currency = it; saveCurrency(context, it) }, onAppearance = { appearance = it; saveSetting(context, "appearance", it) }, onAccent = { accent = it; saveSetting(context, "accent", it) }, onBack = { settings = false }); return@TrakrTheme }
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist, modifier = Modifier.clickable { choosingMonth = true }) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous month") } }, actions = { IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Outlined.ChevronRight, "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) },
+        topBar = { CenterAlignedTopAppBar(title = { Text(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), fontFamily = Geist, modifier = Modifier.clickable { choosingMonth = true }) }, navigationIcon = { IconButton(onClick = { month = month.minusMonths(1) }) { Icon(painterResource(R.drawable.ic_chevron_left), "Previous month") } }, actions = { IconButton(onClick = { month = month.plusMonths(1) }) { Icon(painterResource(R.drawable.ic_chevron_right), "Next month") } }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) },
     ) { padding -> Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
         LedgerContent(month, entries, currency, { id -> save(entries.filterNot { it.id == id }) }, dialog, displayedForm, { dialog = null }, { save(entries + it); dialog = null }, Modifier.fillMaxSize())
         QuickActions(onIncome = { displayedForm = "income"; dialog = "income" }, onExpense = { displayedForm = "expense"; dialog = "expense" }, onSettings = { settings = true }, modifier = Modifier.align(Alignment.BottomCenter))
@@ -191,7 +193,7 @@ class MainActivity : ComponentActivity() {
                     .background(Color(0xFFDC2626))
                     .clickable { onDelete(entry.id) },
                 contentAlignment = Alignment.Center,
-            ) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.DeleteOutline, null, tint = Color.White); Spacer(Modifier.width(6.dp)); Text("Delete", fontFamily = Geist, color = Color.White, style = MaterialTheme.typography.labelLarge) } }
+            ) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(painterResource(R.drawable.ic_trash), null, tint = Color.White); Spacer(Modifier.width(6.dp)); Text("Delete", fontFamily = Geist, color = Color.White, style = MaterialTheme.typography.labelLarge) } }
         }
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainer,
@@ -241,14 +243,14 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.weight(1f).height(60.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
-            ) { Icon(Icons.Outlined.ArrowDownward, null); Spacer(Modifier.width(8.dp)); Text("Income", fontFamily = Geist) }
-            Button(onClick = onExpense, modifier = Modifier.weight(1f).height(60.dp), shape = CircleShape) { Icon(Icons.Outlined.ArrowUpward, null); Spacer(Modifier.width(8.dp)); Text("Expense", fontFamily = Geist) }
+            ) { Icon(painterResource(R.drawable.ic_arrow_down), null); Spacer(Modifier.width(8.dp)); Text("Income", fontFamily = Geist) }
+            Button(onClick = onExpense, modifier = Modifier.weight(1f).height(60.dp), shape = CircleShape) { Icon(painterResource(R.drawable.ic_arrow_up), null); Spacer(Modifier.width(8.dp)); Text("Expense", fontFamily = Geist) }
             FilledTonalIconButton(
                 onClick = onSettings,
                 modifier = Modifier.size(60.dp),
                 shape = CircleShape,
                 colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
-            ) { Icon(Icons.Outlined.Settings, "Settings") }
+            ) { Icon(painterResource(R.drawable.ic_settings), "Settings") }
         }
     }
 }
@@ -257,7 +259,7 @@ class MainActivity : ComponentActivity() {
     var currencyOpen by remember { mutableStateOf(false) }
     var appearanceOpen by remember { mutableStateOf(false) }
     var colorOpen by remember { mutableStateOf(false) }
-    Scaffold(topBar = { TopAppBar(title = { Text("Settings", fontFamily = Geist) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Outlined.ChevronLeft, "Back") } }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text("Settings", fontFamily = Geist) }, navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_chevron_left), "Back") } }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Text("Preferences", style = MaterialTheme.typography.titleSmall, fontFamily = Geist, color = MaterialTheme.colorScheme.onSurfaceVariant)
             SettingRow("Currency", currency, currencyOpen, { currencyOpen = it }, listOf("INR", "IDR", "USD", "CAD", "MYR"), onCurrency)
@@ -300,7 +302,7 @@ class MainActivity : ComponentActivity() {
 @Composable private fun MonthDialog(current: YearMonth, onDismiss: () -> Unit, onPick: (YearMonth) -> Unit) {
     var selected by remember { mutableStateOf(current) }
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Choose month", fontFamily = Geist) }, text = { Column {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = { selected = selected.minusYears(1) }) { Icon(Icons.Outlined.ChevronLeft, "Previous year") }; Text(selected.year.toString(), style = MaterialTheme.typography.titleMedium, fontFamily = Geist); IconButton(onClick = { selected = selected.plusYears(1) }) { Icon(Icons.Outlined.ChevronRight, "Next year") } }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = { selected = selected.minusYears(1) }) { Icon(painterResource(R.drawable.ic_chevron_left), "Previous year") }; Text(selected.year.toString(), style = MaterialTheme.typography.titleMedium, fontFamily = Geist); IconButton(onClick = { selected = selected.plusYears(1) }) { Icon(painterResource(R.drawable.ic_chevron_right), "Next year") } }
         java.time.Month.entries.toList().chunked(3).forEach { row -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) { row.forEach { item -> TextButton(onClick = { selected = YearMonth.of(selected.year, item) }) { Text(item.name.take(3), fontFamily = Geist) } } } }
     } }, confirmButton = { TextButton(onClick = { onPick(selected) }) { Text("Done", fontFamily = Geist) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", fontFamily = Geist) } })
 }
